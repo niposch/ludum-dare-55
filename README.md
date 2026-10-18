@@ -1,6 +1,6 @@
 Play the [browser build](https://niposch.de/ludum-dare-55/) · [web deployment notes](docs/web-deployment.md).
 
-# Ludum Dare 55
+# Footlong Flight
 Our project for [Ludum Dare 55](https://ldjam.com/).
 
 # Conventions
