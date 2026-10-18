@@ -39,11 +39,13 @@ jobs:
           "$godot" --headless --path godot --editor --import > bootstrap.log 2>&1
           "$godot" --headless --path godot --editor --import 2>&1 | tee import.log
           mkdir -p build/web
-          "$godot" --headless --path godot --export-release Web "$PWD/build/web/index.html" 2>&1 | tee export.log
+          entry="game-${GITHUB_SHA:0:12}"
+          "$godot" --headless --path godot --export-release Web "$PWD/build/web/$entry.html" 2>&1 | tee export.log
+          mv "build/web/$entry.html" build/web/index.html
           if grep -E 'SCRIPT ERROR|Parse Error|Failed to load script' import.log export.log; then exit 1; fi
           test -s build/web/index.html
-          test -s build/web/index.pck
-          test -s build/web/index.wasm
+          test -s "build/web/$entry.pck"
+          test -s "build/web/$entry.wasm"
           touch build/web/.nojekyll
       - uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5
         with:
