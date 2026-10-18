@@ -6,7 +6,7 @@ Play at **https://niposch.de/ludum-dare-55/**. GitHub Pages inherits the custom 
 
 Pages uses GitHub Actions (`build_type: workflow`). Push source changes to `master` or manually dispatch `.github/workflows/web-export.yml`. The workflow downloads the official Godot **4.3** editor and matching templates, checks their SHA-512 release sums, fully imports resources (including generated translations), exports the `Web` preset and deploys `build/web`. Generated binaries are not committed. The engine version is pinned to retain these jam-era games' compatibility; update only with a gameplay check.
 
-The web preset explicitly disables threads and PWA caching. This avoids the SharedArrayBuffer/cross-origin-isolation header requirement on static GitHub Pages. All generated resources use relative URLs, so the game runs under its repository subdirectory. LD54's previous `gh-pages` export required isolation and failed before startup; the Actions deployment replaces that published artifact without deleting historical branches.
+The web preset explicitly disables threads and PWA caching. This avoids the SharedArrayBuffer/cross-origin-isolation header requirement on static GitHub Pages. Exported asset filenames include the source revision to prevent mixed old/new browser caches. All generated resources use relative URLs, so the game runs under its repository subdirectory. LD54's previous `gh-pages` export required isolation and failed before startup; the Actions deployment replaces that published artifact without deleting historical branches.
 
 Local equivalent with the official Godot 4.3 editor and web templates installed:
 
