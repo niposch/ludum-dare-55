@@ -35,6 +35,8 @@ jobs:
         shell: bash
         run: |
           godot="$PWD/.toolchain/Godot_v${GODOT_VERSION}-stable_linux.x86_64"
+          # Bootstrap imports before validating scripts that preload imported assets.
+          "$godot" --headless --path godot --editor --import > bootstrap.log 2>&1
           "$godot" --headless --path godot --editor --import 2>&1 | tee import.log
           mkdir -p build/web
           "$godot" --headless --path godot --export-release Web "$PWD/build/web/index.html" 2>&1 | tee export.log
