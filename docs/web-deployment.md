@@ -18,3 +18,7 @@ python -m http.server --directory build/web 8080
 ```
 
 Open http://localhost:8080/ rather than the HTML file directly. Before publishing changes, verify menu/gameplay and console errors in a browser. A successful export alone is not a play test.
+
+## Verification — 18 October 2026
+
+Verified public runtime `dec696e` in successful Pages run `39165017839` on 2026-10-18: menu and gameplay loaded in Chromium without console errors. This is a startup/interaction check, not a completed playthrough.
