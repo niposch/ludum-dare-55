@@ -1,41 +1,60 @@
-name: Web Export
-on: [ push ]
-
+name: Build and deploy web game
+on:
+  push:
+    branches: [master]
+    paths-ignore: ['docs/**', 'README.md']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: github-pages
+  cancel-in-progress: false
 env:
-  GODOT_VERSION: 4.2.2
-
+  GODOT_VERSION: '4.3'
 jobs:
-  web-export:
+  build:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Download Godot (v${{ env.GODOT_VERSION }})
-        run: wget https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}-stable/Godot_v${GODOT_VERSION}-stable_linux.x86_64.zip
-
-      - name: Download Godot Templates (v${{ env.GODOT_VERSION }})
-        run: wget https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}-stable/Godot_v${GODOT_VERSION}-stable_export_templates.tpz
-
-      - name: Unpackage Template
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - name: Install official Godot and web templates
+        shell: bash
         run: |
-          unzip Godot_v${GODOT_VERSION}-stable_export_templates.tpz
-          mkdir -p ~/.local/share/godot/export_templates/${GODOT_VERSION}.stable
-          cp templates/* ~/.local/share/godot/export_templates/${GODOT_VERSION}.stable
-
-      - name: Unpacke Godot
-        run: unzip Godot_v${GODOT_VERSION}-stable_linux.x86_64.zip
-
-      - name: Create Godot export files
-        run: ./Godot_v${GODOT_VERSION}-stable_linux.x86_64 --headless --quit --editor ./godot/project.godot
-
-      - name: Export for Web
+          release="https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}-stable"
+          editor="Godot_v${GODOT_VERSION}-stable_linux.x86_64.zip"
+          templates="Godot_v${GODOT_VERSION}-stable_export_templates.tpz"
+          curl --fail --location --retry 3 "$release/$editor" -o "$editor"
+          curl --fail --location --retry 3 "$release/$templates" -o "$templates"
+          curl --fail --location --retry 3 "$release/SHA512-SUMS.txt" -o SHA512-SUMS.txt
+          sha512sum --check --ignore-missing SHA512-SUMS.txt
+          unzip -q "$editor" -d .toolchain
+          unzip -q "$templates" 'templates/web*' -d .toolchain
+          mkdir -p "$HOME/.local/share/godot/export_templates/${GODOT_VERSION}.stable"
+          cp .toolchain/templates/web* "$HOME/.local/share/godot/export_templates/${GODOT_VERSION}.stable/"
+      - name: Import resources and export single-threaded game
+        shell: bash
         run: |
-          mkdir -p ./build/web/
-          ./Godot_v${GODOT_VERSION}-stable_linux.x86_64 --headless ./godot/project.godot --export-release "Web" ../build/web/index.html
-
-      - name: Archive web build
-        uses: actions/upload-artifact@v4
+          godot="$PWD/.toolchain/Godot_v${GODOT_VERSION}-stable_linux.x86_64"
+          "$godot" --headless --path godot --editor --import 2>&1 | tee import.log
+          mkdir -p build/web
+          "$godot" --headless --path godot --export-release Web "$PWD/build/web/index.html" 2>&1 | tee export.log
+          if grep -E 'SCRIPT ERROR|Parse Error|Failed to load script' import.log export.log; then exit 1; fi
+          test -s build/web/index.html
+          test -s build/web/index.pck
+          test -s build/web/index.wasm
+          touch build/web/.nojekyll
+      - uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5
         with:
-          name: web-export
-          path: ./build/web
+          path: build/web
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5
+        id: deployment

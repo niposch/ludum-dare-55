@@ -16,3 +16,11 @@ godot/build/
 
 # idea
 .idea/
+
+# Browser publication outputs and toolchain
+/build/
+/.toolchain/
+/*.zip
+/*.tpz
+/*.log
+/SHA512-SUMS.txt
